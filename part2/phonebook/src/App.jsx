@@ -3,6 +3,7 @@ import numbersService from './services/numbers';
 import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
 import Persons from './components/Persons';
+import Notification from './components/Notification';
 
 const App = () => {
   const [persons, setPersons] = useState([])
@@ -10,6 +11,9 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+
 
   useEffect(() => {
     numbersService
@@ -39,10 +43,14 @@ const App = () => {
               persons.map((person) =>
                 person.id === existingPerson.id ? response : person
               )
-            );
-          });
+            );            
+          })
+          
 
-        alert(`Replaced ${newName}'s number in the phonebook`);
+        setSuccessMessage(`Replaced ${newName}'s number in the phonebook`);
+        setTimeout(() => {
+          setSuccessMessage(null);
+          }, 5000);
         setNewName('');
         setNewNumber('');
       }
@@ -54,8 +62,10 @@ const App = () => {
       numbersService.add(personObject).then(response => {
         setPersons(persons.concat(response))
       });
-      
-      alert(`Added ${newName} to phonebook`);
+      setSuccessMessage(`Added ${newName} to phonebook`);
+      setTimeout(() => {
+        setSuccessMessage(null);
+        }, 5000);
       setNewName('');
       setNewNumber('');
     }
@@ -65,10 +75,19 @@ const App = () => {
     console.log(name);
     const confirmDelete = window.confirm(`Delete ${name}?`)
     if (confirmDelete) {
-      numbersService.del(id).then(
+      numbersService.del(id)
+      .then(
         setPersons(persons.filter(person => person.id !== id))
+      )
+      .catch((error) => {
+        console.log(error);
+        setErrorMessage(
+          `information of ${name} has already been removed from server`
         )
-
+        setTimeout(() => {
+          setErrorMessage(null);
+          }, 5000);
+      })
     }
   }
 
@@ -90,6 +109,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={successMessage} />
+      <Notification message={errorMessage} isError />
       <Filter 
         searchTerm={searchTerm}
         handleSearchChange={handleSearchChange}
